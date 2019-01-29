@@ -1,10 +1,15 @@
 #include "levelgen.cpp"
 #include <iostream>
 #include <cstdlib>
-#include <ctime>
 #include <cwchar>
 #include <wchar.h>
 #include <conio.h>
+#include <thread>
+
+using namespace std::this_thread;
+using namespace std::chrono_literals; // ns, us, ms, s, h, etc.
+using std::chrono::system_clock;
+using std::chrono::milliseconds;
 
 enum GameMode {
 	MENU = 1,
@@ -13,8 +18,9 @@ enum GameMode {
 	EXIT = 4
 };
 GameMode gameMode = GameMode::MENU;
-std::chrono::system_clock::time_point startTime;
-std::chrono::system_clock::time_point endTime;
+
+system_clock::time_point startTime;
+system_clock::time_point endTime;
 
 enum GameSize {
 	SMALL = 1,
@@ -163,7 +169,7 @@ void StartGame() {
 	MovePlayerToStairs(Terrain::STAIRS_UP);
 	UpdatePlayerMap(currLevel, playerCoord, currVisionRadius);
 	gameMode = GameMode::PLAYING;
-	startTime = std::chrono::system_clock::now();
+	startTime = system_clock::now();
 }
 
 void EndGame() {
@@ -172,7 +178,7 @@ void EndGame() {
 		return;
 	}
 	gameMode = GameMode::GAME_OVER;
-	endTime = std::chrono::system_clock::now();
+	endTime = system_clock::now();
 }
 
 void ResetCursor()
@@ -194,7 +200,7 @@ void ParticleBurst(Point p) {
 	currLevel->particles[p.x][p.y] = Particle::NEW_SPARKLE;
 	for (int i = 0; i < PARTICLE_BURST_TICKS; i++) {
 		Draw();
-		Sleep(PARTICLE_UPDATE_DELAY);
+		sleep_until(system_clock::now() + milliseconds(PARTICLE_UPDATE_DELAY));
 		// Age all new particles
 		for (int x = 0; x < HEIGHT; x++) {
 			for (int y = 0; y < WIDTH; y++) {
@@ -246,9 +252,9 @@ void DrawMenu() {
 	string menuMargin = "";
 	menuMargin.assign(screenCols / 5, ' ');
 
-	screenDisplay += ApplyTextSpacing("      ooO You!                      \n");
-	screenDisplay += ApplyTextSpacing("        V Stairs (Down)             \n");
-	screenDisplay += ApplyTextSpacing("        < Stairs (Up)               \n");
+	screenDisplay += ApplyTextSpacing("      OOO You!                      \n");
+	screenDisplay += ApplyTextSpacing("        V Ladder (Down)             \n");
+	screenDisplay += ApplyTextSpacing("        H Ladder (Up)               \n");
 	screenDisplay += ApplyTextSpacing("        @ Food   - Increases your   \n");
 	screenDisplay += ApplyTextSpacing("                   score and length.\n");
 	screenDisplay += ApplyTextSpacing("        % Potion - Restores 3 HP.   \n");
@@ -259,13 +265,14 @@ void DrawMenu() {
 
 	screenDisplay += "\n" + ApplyTextSpacing("Tips:") + "\n";
 	screenDisplay += ApplyTextSpacing(" - The longer you are, the slower you'll move.    \n");
-	screenDisplay += ApplyTextSpacing(" - The caves get darker as you descend, so        \n") +
+	screenDisplay += ApplyTextSpacing(" - The caves get darker as you descend --         \n") +
 		ApplyTextSpacing("   visibility will decrease as you go deeper.     \n");
 
 	screenDisplay += ApplyTextSpacing(" - Eating the golden apple will make you emit     \n") +
 		ApplyTextSpacing("   light and thereby increase visibility. However,\n") +
 		ApplyTextSpacing("   it will also make you move very fast. In this  \n") +
-		ApplyTextSpacing("   state, eating food will not slow you down.     \n");
+		ApplyTextSpacing("   state, your length will no longer have any     \n") +
+		ApplyTextSpacing("   effect on your speed.                          \n");
 
 	screenDisplay += ApplyTextSpacing(" - The golden apple doubles your score when eaten.\n");
 
@@ -399,7 +406,12 @@ void DrawGameOver() {
 		screenDisplay += ApplyTextSpacing("+-----------+") + "\n";
 		screenDisplay += ApplyTextSpacing("| GAME OVER |") + "\n";
 		screenDisplay += ApplyTextSpacing("+-----------+") + "\n";
-		screenDisplay += "\n" + ApplyTextSpacing("You lost on floor " + to_string(currLevel->levelNum) + ".") + "\n";
+		string progress = "You lost on floor " + to_string(currLevel->levelNum);
+		if (hasGoldenApple) {
+			progress += " with the golden apple";
+		}
+		progress += ".";
+		screenDisplay += "\n" + ApplyTextSpacing(progress) + "\n";
 	}
 	string snakeDisplay = "";
 	for (int i = 0; i < tailLength; i++) {
@@ -560,7 +572,7 @@ void Move() {
 					if (health <= 0) {
 						EndGame();
 					}
-					immobileStart = std::chrono::system_clock::now();
+					immobileStart = system_clock::now();
 				}
 				break;
 			case (Entity::GOLDEN_APPLE):
@@ -634,7 +646,7 @@ void ProcessTick() {
 	Move();
 	Draw();
 	if (playerState == PlayerState::IMMOBILE) {
-		Sleep(IMMOBILIZE_DELAY);
+		sleep_until(system_clock::now() + milliseconds(IMMOBILIZE_DELAY));
 		FlushConsoleInputBuffer(GetStdHandle(STD_INPUT_HANDLE));
 		playerState = PlayerState::ACTIVE;
 	}
@@ -643,7 +655,7 @@ void ProcessTick() {
 		playerState = PlayerState::ACTIVE;
 	}
 	else {
-		Sleep(delay);
+		sleep_until(system_clock::now() + milliseconds(delay));
 	}
 }
 
@@ -676,6 +688,3 @@ int main()
 	}
 	return 0;
 }
-
-// TODO: whitespace
-

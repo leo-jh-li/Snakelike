@@ -1,7 +1,7 @@
 #include <windows.h>
 #include <string>
 
-const std::string VERSION = "1.0.0";
+const std::string VERSION = "1.0.1";
 
 const int NUM_OF_LEVELS = 20;
 const int WIDTH = 49;

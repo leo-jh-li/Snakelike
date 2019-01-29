@@ -10,7 +10,7 @@ enum Terrain {
 	T_DEBUG = 5,
 	TERRAIN_ITEMS = 6
 };
-std::string terrainImg[Terrain::TERRAIN_ITEMS] = { " ", ".", "#", "<", "V", "T" };
+std::string terrainImg[Terrain::TERRAIN_ITEMS] = { " ", ".", "#", "H", "V", "T" };
 Terrain colourfulTerrain[] = { Terrain::STAIRS_UP, Terrain::STAIRS_DOWN };
 
 enum Entity {
